@@ -1,46 +1,102 @@
-# Getting Started with Create React App
+# NetVisor
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+NetVisor is a web-based network analysis tool that allows users to upload Zeek connection logs (.log) and PCAP (Packet Capture) files (.pcap, .pcapng) for insightful visualization and detailed event analysis.
 
-## Available Scripts
+## Table of Contents
+- [How the Program Works](#how-the-program-works)
+- [Instructions for Use](#instructions-for-use)
+  - [Prerequisites](#prerequisites)
+  - [Setup and Running](#setup-and-running)
+  - [Using the Application](#using-the-application)
+- [Purpose of Functions](#purpose-of-functions)
+  - [Backend API Endpoints](#backend-api-endpoints)
+  - [Frontend Components](#frontend-components)
+- [Machine-Readable Summary](#machine-readable-summary)
 
-In the project directory, you can run:
+## How the Program Works
+NetVisor is a full-stack application composed of three main services orchestrated by Docker Compose:
 
-### `npm start`
+1.  **Frontend (React.js):** A user-friendly web interface built with React.js and Material-UI. It handles file uploads, displays visualizations (protocol distribution, device traffic), and presents detailed event logs.
+2.  **Backend (FastAPI):** A Python API built with FastAPI that processes the uploaded network data. It uses `pandas` for Zeek log analysis and `pyshark` (which relies on `tshark`) for PCAP file parsing. It extracts connection summaries, device traffic, and detailed event information.
+3.  **Nginx:** Acts as a reverse proxy, serving the static frontend assets and forwarding API requests to the backend service.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+When a user uploads a file:
+- The **Frontend** sends the file to the appropriate backend endpoint (`/api/upload/` for Zeek logs, `/api/upload_pcap/` for PCAP files).
+- The **Backend** receives the file, parses it, extracts relevant data (protocol summaries, device traffic, detailed events), and sends the structured data back to the frontend.
+- The **Frontend** then renders this data in various interactive components, including data grids and charts.
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+## Instructions for Use
 
-### `npm test`
+### Prerequisites
+Before you begin, ensure you have the following installed:
+-   [Docker](https://docs.docker.com/get-docker/): Docker Engine and Docker Compose (usually included with Docker Desktop).
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Setup and Running
+1.  **Clone the repository:**
+    ```bash
+    git clone <repository-url>
+    cd NetVisor
+    ```
+2.  **Build and run the Docker containers:**
+    ```bash
+    docker compose up --build -d
+    ```
+    This command will:
+    -   Build the `backend` Docker image (installing Python dependencies and `tshark`).
+    -   Build the `frontend` Docker image (installing Node.js dependencies and building the React app).
+    -   Start the `backend`, `frontend`, and `nginx` services in detached mode.
+3.  **Access the application:**
+    Open your web browser and navigate to `http://localhost:3000`.
 
-### `npm run build`
+### Using the Application
+1.  **Upload a File:** Click the "Upload File" button and select either a Zeek connection log (`.log`) or a PCAP file (`.pcap`, `.pcapng`).
+2.  **View Analysis:** Once the file is uploaded and processed, the application will display:
+    -   **Devices by Traffic:** A table showing IP addresses and their total bytes transferred.
+    -   **Protocol Distribution:** A pie chart illustrating the distribution of protocols.
+    -   **Detailed Events:** A table providing granular information about each connection or packet, including date, time, server IP/port, entry vector (source IP/port), protocol, service, and application-layer details.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Purpose of Functions
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Backend API Endpoints
+-   **`GET /`**: Basic health check endpoint, returns `{"message": "NetVisor API is running"}`.
+-   **`POST /upload/`**: Accepts a Zeek connection log (`.log`) file. Parses the log using `pandas` to extract protocol summaries, device traffic, and detailed connection events.
+-   **`POST /upload_pcap/`**: Accepts a PCAP file (`.pcap`, `.pcapng`). Parses the PCAP using `pyshark` to extract protocol summaries, device traffic, and detailed packet events, including application-layer information for HTTP and DNS.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### Frontend Components
+-   **`App.tsx`**: The main React component. It manages file uploads, communicates with the backend API, and renders the various data visualization and analysis components (tables, charts).
 
-### `npm run eject`
+## Machine-Readable Summary
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+```yaml
+project_name: NetVisor
+version: v2
+description: Web-based tool for Zeek log and PCAP file analysis.
+services:
+  - name: frontend
+    technology: React.js, Material-UI
+    role: User Interface, File Uploads, Data Visualization
+  - name: backend
+    technology: FastAPI, Python, pandas, pyshark, tshark
+    role: Data Processing, API Endpoints
+    endpoints:
+      - path: /
+        method: GET
+        purpose: Health Check
+      - path: /upload/
+        method: POST
+        purpose: Process Zeek .log files
+        input: Zeek conn.log file
+        output: Protocol summary, Device traffic, Detailed connection events
+      - path: /upload_pcap/
+        method: POST
+        purpose: Process PCAP (.pcap, .pcapng) files
+        input: PCAP file
+        output: Protocol summary, Device traffic, Detailed packet events (incl. app-layer)
+  - name: nginx
+    technology: Nginx
+    role: Reverse Proxy, Static File Server
+data_analysis_features:
+  - Protocol Summary (Pie Chart)
+  - Devices by Traffic (Table)
+  - Detailed Events (Table: Date, Time, Server IP/Port, Entry Vector IP/Port, Protocol, Service, App Layer Info)
+```
