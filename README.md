@@ -34,7 +34,7 @@ Before you begin, ensure you have the following installed:
 ### Setup and Running
 1.  **Clone the repository:**
     ```bash
-    git clone <(https://github.com/GusOliveira/PCAP_Vision/tree/main)>
+    git clone https://github.com/GusOliveira/PCAP_Vision/tree/main
     cd NetVisor
     ```
 2.  **Build and run the Docker containers:**
